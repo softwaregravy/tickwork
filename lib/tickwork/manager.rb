@@ -1,4 +1,4 @@
-module Clockwork
+module Tickwork
   class Manager
     class NoHandlerDefined < RuntimeError; end
     class DuplicateJobName < RuntimeError; end
@@ -18,13 +18,19 @@ module Clockwork
 
     def configure
       yield(config)
+      if config[:sleep_timeout]
+        config[:logger].warn 'INCORRECT USAGE: sleep_timeout is not used'
+      end
       if config[:sleep_timeout] < 1
         config[:logger].warn 'sleep_timeout must be >= 1 second'
+      end
+      if config[:grace_period] < 60
+        config[:logger].warn 'grace_period must be >= 1 second'
       end
     end
 
     def default_configuration
-      { :sleep_timeout => 1, :logger => Logger.new(STDOUT), :thread => false, :max_threads => 10 }
+      { :sleep_timeout => 1, grace_period: 300, :logger => Logger.new(STDOUT), :thread => false, :max_threads => 10 }
     end
 
     def handler(&block)
@@ -53,6 +59,15 @@ module Clockwork
 
     def fire_callbacks(event, *args)
       @callbacks[event].nil? || @callbacks[event].all? { |h| h.call(*args) }
+    end
+
+    def run
+      log "Starting clock for #{@events.size} events: [ #{@events.map(&:to_s).join(' ')} ]"
+      loop do
+        tick
+        interval = config[:sleep_timeout] - Time.now.subsec + 0.001
+        sleep(interval) if interval > 0
+      end
     end
 
     def tick(t=Time.now)

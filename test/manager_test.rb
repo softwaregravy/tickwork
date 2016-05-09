@@ -4,9 +4,9 @@ require 'mocha/mini_test'
 require 'time'
 require 'active_support/time'
 
-describe Clockwork::Manager do
+describe Tickwork::Manager do
   before do
-    @manager = Clockwork::Manager.new
+    @manager = Tickwork::Manager.new
     class << @manager
       def log(msg); end
     end
@@ -68,14 +68,14 @@ describe Clockwork::Manager do
   end
 
   it "aborts when no handler defined" do
-    manager = Clockwork::Manager.new
-    assert_raises(Clockwork::Manager::NoHandlerDefined) do
+    manager = Tickwork::Manager.new
+    assert_raises(Tickwork::Manager::NoHandlerDefined) do
       manager.every(1.minute, 'myjob')
     end
   end
 
   it "aborts when fails to parse" do
-    assert_raises(Clockwork::At::FailedToParse) do
+    assert_raises(Tickwork::At::FailedToParse) do
       @manager.every(1.day, "myjob", :at => "a:bc")
     end
   end
@@ -118,6 +118,7 @@ describe Clockwork::Manager do
     @manager.every(1.minute, 'myjob')
 
     mocked_logger = MiniTest::Mock.new
+    mocked_logger.expect :warn, true, [String]
     mocked_logger.expect :error, true, [RuntimeError]
     @manager.configure { |c| c[:logger] = mocked_logger }
     @manager.tick(Time.now)
@@ -133,15 +134,18 @@ describe Clockwork::Manager do
   end
 
   it "should be configurable" do
+    logger = Logger.new(STDOUT)
     @manager.configure do |config|
       config[:sleep_timeout] = 200
-      config[:logger] = "A Logger"
+      config[:grace_period] = 600
+      config[:logger] = logger
       config[:max_threads] = 10
       config[:thread] = true
     end
 
+    assert_equal 600, @manager.config[:grace_period]
     assert_equal 200, @manager.config[:sleep_timeout]
-    assert_equal "A Logger", @manager.config[:logger]
+    assert_equal logger, @manager.config[:logger]
     assert_equal 10, @manager.config[:max_threads]
     assert_equal true, @manager.config[:thread]
   end

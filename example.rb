@@ -1,6 +1,6 @@
-require 'clockwork'
+require 'tickwork'
 
-module Clockwork
+module Tickwork
   handler do |job|
     puts "Queueing job: #{job}"
   end
