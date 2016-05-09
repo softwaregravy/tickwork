@@ -1,15 +1,8 @@
-Clockwork - a clock process to replace cron [![Build Status](https://secure.travis-ci.org/tomykaira/clockwork.png?branch=master)](http://travis-ci.org/tomykaira/clockwork) [![Dependency Status](https://gemnasium.com/tomykaira/clockwork.png)](https://gemnasium.com/tomykaira/clockwork)
+Tickwork - a scheduler library that requires an external call to tick to run scheduled events
+[![Build Status](https://secure.travis-ci.org/softwaregravy/tickwork.png?branch=master)](http://travis-ci.org/softwaregravy/tickwork) [![Dependency Status](https://gemnasium.com/softwaregravy/tickwork.png)](https://gemnasium.com/softwaregravy/tickwork)
 ===========================================
 
-Cron is non-ideal for running scheduled application tasks, especially in an app
-deployed to multiple machines.  [More details.](http://adam.heroku.com/past/2010/4/13/rethinking_cron/)
-
-Clockwork is a cron replacement.  It runs as a lightweight, long-running Ruby
-process which sits alongside your web processes (Mongrel/Thin) and your worker
-processes (DJ/Resque/Minion/Stalker) to schedule recurring work at particular
-times or dates.  For example, refreshing feeds on an hourly basis, or send
-reminder emails on a nightly basis, or generating invoices once a month on the
-1st.
+This is a stripped down version of clockwork. Development still in progress.
 
 Quickstart
 ----------
