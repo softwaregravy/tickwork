@@ -104,6 +104,7 @@ module Tickwork
         ticks += 1
       end
       data_store.set(data_store_key, last)
+      last
     end
 
     def tick(t=Time.now.to_i)

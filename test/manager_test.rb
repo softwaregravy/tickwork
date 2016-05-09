@@ -479,7 +479,7 @@ end
     assert_equal false, @manager.config[:data_store].get('_tickwork_myjob').nil?
   end
 
-  it "should start from max catchup" do 
+  it "should start from max catchup when last is further in the past" do 
     @manager.configure do |config|
       config[:tick_size] = 1 
       config[:max_ticks] = 1
@@ -519,6 +519,18 @@ end
     @manager.data_store.set(@manager.data_store_key, last)
     @manager.expects(:tick).with(Time.now.to_i - 36000 + 1).then.returns
     @manager.run
+  end
+
+  it "should return the last time it ran" do 
+    @manager.configure do |config|
+      config[:tick_size] = 10
+      config[:max_ticks] = 2
+    end
+    last = Time.now.to_i - 1000
+    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.expects(:tick).with(last + 10).then.returns
+    @manager.expects(:tick).with(last + 20).then.returns
+    assert_equal last + 20, @manager.run
   end
 
   it "should clear it's datastore on #clear!" do 
