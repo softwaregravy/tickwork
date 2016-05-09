@@ -1,4 +1,6 @@
 require File.expand_path('../../lib/tickwork', __FILE__)
+require File.expand_path('../data_stores/fake_store.rb', __FILE__)
+require File.expand_path('../null_logger.rb', __FILE__)
 require "minitest/autorun"
 require 'mocha/mini_test'
 require 'time'
@@ -7,6 +9,10 @@ require 'active_support/time'
 describe Tickwork::Manager do
   before do
     @manager = Tickwork::Manager.new
+    @manager.configure do |config|
+      config[:data_store] = Tickwork::FakeStore.new
+      config[:logger] = NullLogger.new
+    end
     class << @manager
       def log(msg); end
     end
@@ -134,13 +140,14 @@ describe Tickwork::Manager do
   end
 
   it "should be configurable" do
-    logger = Logger.new(STDOUT)
+    logger = NullLogger.new
     @manager.configure do |config|
       config[:sleep_timeout] = 200
       config[:grace_period] = 600
       config[:logger] = logger
       config[:max_threads] = 10
       config[:thread] = true
+      config[:namespace] = 'superhero'
     end
 
     assert_equal 600, @manager.config[:grace_period]
@@ -148,13 +155,32 @@ describe Tickwork::Manager do
     assert_equal logger, @manager.config[:logger]
     assert_equal 10, @manager.config[:max_threads]
     assert_equal true, @manager.config[:thread]
+    assert_equal 'superhero', @manager.config[:namespace]
   end
 
   it "configuration should have reasonable defaults" do
+    @manager = Tickwork::Manager.new
     assert_equal 1, @manager.config[:sleep_timeout]
     assert @manager.config[:logger].is_a?(Logger)
     assert_equal 10, @manager.config[:max_threads]
     assert_equal false, @manager.config[:thread]
+    assert_equal '_tickwork_', @manager.config[:namespace]
+  end
+
+  it "config raises exception without a datastore" do 
+    @my_manager = Tickwork::Manager.new
+    assert_raises Tickwork::Manager::NoDataStoreDefined do 
+      @my_manager.configure do |config|
+        config[:grace_period] = 10
+      end
+    end
+  end
+
+  it "run raises exception without a datastore" do 
+    @my_manager = Tickwork::Manager.new
+    assert_raises Tickwork::Manager::NoDataStoreDefined do 
+      @my_manager.run
+    end
   end
 
   describe ':at option' do
@@ -258,7 +284,7 @@ describe Tickwork::Manager do
 
   describe "max_threads" do
     it "should warn when an event tries to generate threads more than max_threads" do
-      logger = Logger.new(STDOUT)
+      logger = NullLogger.new
       @manager.configure do |config|
         config[:max_threads] = 1
         config[:logger] = logger

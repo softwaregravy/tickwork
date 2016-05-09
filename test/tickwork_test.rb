@@ -1,4 +1,5 @@
 require File.expand_path('../../lib/tickwork', __FILE__)
+require File.expand_path('../data_stores/fake_store.rb', __FILE__)
 require 'minitest/autorun'
 require 'mocha/mini_test'
 
@@ -8,6 +9,7 @@ describe Tickwork do
     Tickwork.configure do |config|
       config[:sleep_timeout] = 0
       config[:logger] = Logger.new(@log_output)
+      config[:data_store] = Tickwork::FakeStore.new
     end
   end
 
@@ -58,6 +60,7 @@ describe Tickwork do
     Tickwork.configure do |config|
       config[:sleep_timeout] = 0
       config[:logger] = Logger.new(@log_output)
+      config[:data_store] = Tickwork::FakeStore.new
     end
     Tickwork.manager.expects(:loop).yields.then.returns
     Tickwork.run
