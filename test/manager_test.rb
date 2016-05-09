@@ -7,12 +7,14 @@ require 'time'
 require 'active_support/time'
 
 describe Tickwork::Manager do
+def self.test_order
+   :alpha
+end
   before do
     @manager = Tickwork::Manager.new
     @manager.configure do |config|
       config[:data_store] = Tickwork::FakeStore.new
       config[:logger] = NullLogger.new
-      #config[:logger] = Logger.new(STDOUT)
     end
     class << @manager
       def log(msg); end
@@ -142,7 +144,6 @@ describe Tickwork::Manager do
   it "should be configurable" do
     logger = NullLogger.new
     @manager.configure do |config|
-      config[:grace_period] = 600
       config[:logger] = logger
       config[:max_threads] = 20
       config[:max_ticks] = 21
@@ -151,7 +152,6 @@ describe Tickwork::Manager do
       config[:namespace] = 'superhero'
     end
 
-    assert_equal 600, @manager.config[:grace_period]
     assert_equal logger, @manager.config[:logger]
     assert_equal 20, @manager.config[:max_threads]
     assert_equal 21, @manager.config[:max_ticks]
@@ -174,7 +174,7 @@ describe Tickwork::Manager do
     @my_manager = Tickwork::Manager.new
     assert_raises Tickwork::Manager::NoDataStoreDefined do 
       @my_manager.configure do |config|
-        config[:grace_period] = 10
+        config[:tick_size] = 10
       end
     end
   end
@@ -452,7 +452,7 @@ describe Tickwork::Manager do
     @manager.data_store.set(@manager.data_store_key, last)
     @manager.expects(:tick).with(last + 10).then.returns
     @manager.run
-    assert_equal (last + 10), @manager.data_store.get(@manager.data_store)
+    assert_equal (last + 10), @manager.data_store.get(@manager.data_store_key)
   end
 
   it "should tick from now if no last time" do 
@@ -464,7 +464,21 @@ describe Tickwork::Manager do
     @manager.run
   end
 
-  it "should clear it's datastore on clear" do 
+  it "should be saving event last run times" do 
+    @manager.configure do |config|
+      config[:tick_size] = 10
+      config[:max_ticks] = 1
+    end
+    @manager.every(1.minute, 'myjob')
+    assert_equal 0, @manager.config[:data_store].size
+    #@manager.expects(:tick).with(Time.now.to_i).then.returns
+    @manager.run
+    assert_equal 2, @manager.config[:data_store].size
+    assert_equal false, @manager.config[:data_store].get('_tickwork_myjob').nil?
+  end
+
+
+  it "should clear it's datastore on #clear!" do 
     @manager.data_store.set(@manager.data_store_key, "10")
     @manager.clear!
     assert_equal nil, @manager.data_store.get(@manager.data_store_key)

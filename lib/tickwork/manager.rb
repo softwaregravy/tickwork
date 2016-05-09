@@ -4,6 +4,8 @@ module Tickwork
     class NoDataStoreDefined < RuntimeError; end
     class DuplicateJobName < RuntimeError; end
 
+    MANAGER_KEY = '__manager'
+
     attr_reader :config
 
     def initialize
@@ -26,9 +28,6 @@ module Tickwork
           config[:logger].warn 'sleep_timeout must be >= 1 second'
         end
       end
-      if config[:grace_period] < 60
-        config[:logger].warn 'grace_period must be >= 1 second'
-      end
       if config[:data_store].nil?
         raise NoDataStoreDefined.new
       end
@@ -36,7 +35,6 @@ module Tickwork
 
     def default_configuration
       { 
-        grace_period: 300, 
         logger: Logger.new(STDOUT), 
         thread: false, 
         max_threads: 10,
@@ -79,7 +77,7 @@ module Tickwork
     end
 
     def data_store_key
-      @data_store_key ||= config[:namespace] + 'manager'
+      @data_store_key ||= config[:namespace] + MANAGER_KEY
     end
 
       # pretty straight forward if you think about it
