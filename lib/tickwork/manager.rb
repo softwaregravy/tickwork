@@ -31,6 +31,9 @@ module Tickwork
       if config[:data_store].nil?
         raise NoDataStoreDefined.new
       end
+      if config[:tick_size] > 60
+        config[:logger].warn 'tick_size is greater than 60. Events scheduled for a specific time may be missed'
+      end
     end
 
     def default_configuration
@@ -66,6 +69,9 @@ module Tickwork
     end
 
     def every(period, job, options={}, &block)
+      if period < config[:tick_size]
+        config[:logger].warn 'period is smaller than tick size. will fail to schedule all events'
+      end
       if options[:at].respond_to?(:each)
         every_with_multiple_times(period, job, options, &block)
       else
