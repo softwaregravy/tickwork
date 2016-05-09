@@ -1,4 +1,4 @@
-module Clockwork
+module Tickwork
   class At
     class FailedToParse < StandardError; end
 

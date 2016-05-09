@@ -2,27 +2,27 @@ require File.expand_path('../../lib/clockwork', __FILE__)
 require 'minitest/autorun'
 require 'mocha/mini_test'
 
-describe Clockwork do
+describe Tickwork do
   before do
     @log_output = StringIO.new
-    Clockwork.configure do |config|
+    Tickwork.configure do |config|
       config[:sleep_timeout] = 0
       config[:logger] = Logger.new(@log_output)
     end
   end
 
   after do
-    Clockwork.clear!
+    Tickwork.clear!
   end
 
   it 'should run events with configured logger' do
     run = false
-    Clockwork.handler do |job|
+    Tickwork.handler do |job|
       run = job == 'myjob'
     end
-    Clockwork.every(1.minute, 'myjob')
-    Clockwork.manager.expects(:loop).yields.then.returns
-    Clockwork.run
+    Tickwork.every(1.minute, 'myjob')
+    Tickwork.manager.expects(:loop).yields.then.returns
+    Tickwork.run
 
     assert run
     assert @log_output.string.include?('Triggering')
@@ -30,12 +30,12 @@ describe Clockwork do
 
   it 'should log event correctly' do
     run = false
-    Clockwork.handler do |job|
+    Tickwork.handler do |job|
       run = job == 'an event'
     end
-    Clockwork.every(1.minute, 'an event')
-    Clockwork.manager.expects(:loop).yields.then.returns
-    Clockwork.run
+    Tickwork.every(1.minute, 'an event')
+    Tickwork.manager.expects(:loop).yields.then.returns
+    Tickwork.run
     assert run
     assert @log_output.string.include?("Triggering 'an event'")
   end
@@ -43,42 +43,42 @@ describe Clockwork do
   it 'should pass event without modification to handler' do
     event_object = 'myEvent'
     run = false
-    Clockwork.handler do |job|
+    Tickwork.handler do |job|
       run = job == event_object
     end
-    Clockwork.every(1.minute, event_object)
-    Clockwork.manager.expects(:loop).yields.then.returns
-    Clockwork.run
+    Tickwork.every(1.minute, event_object)
+    Tickwork.manager.expects(:loop).yields.then.returns
+    Tickwork.run
     assert run
   end
 
   it 'should not run anything after reset' do
-    Clockwork.every(1.minute, 'myjob') {  }
-    Clockwork.clear!
-    Clockwork.configure do |config|
+    Tickwork.every(1.minute, 'myjob') {  }
+    Tickwork.clear!
+    Tickwork.configure do |config|
       config[:sleep_timeout] = 0
       config[:logger] = Logger.new(@log_output)
     end
-    Clockwork.manager.expects(:loop).yields.then.returns
-    Clockwork.run
+    Tickwork.manager.expects(:loop).yields.then.returns
+    Tickwork.run
     assert @log_output.string.include?('0 events')
   end
 
   it 'should pass all arguments to every' do
-    Clockwork.every(1.second, 'myjob', if: lambda { |_| false }) {  }
-    Clockwork.manager.expects(:loop).yields.then.returns
-    Clockwork.run
+    Tickwork.every(1.second, 'myjob', if: lambda { |_| false }) {  }
+    Tickwork.manager.expects(:loop).yields.then.returns
+    Tickwork.run
     assert @log_output.string.include?('1 events')
     assert !@log_output.string.include?('Triggering')
   end
 
   it 'support module re-open style' do
     $called = false
-    module ::Clockwork
+    module ::Tickwork
       every(1.second, 'myjob') { $called = true }
     end
-    Clockwork.manager.expects(:loop).yields.then.returns
-    Clockwork.run
+    Tickwork.manager.expects(:loop).yields.then.returns
+    Tickwork.run
     assert $called
   end
 end

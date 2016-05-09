@@ -1,16 +1,16 @@
 Gem::Specification.new do |s|
-  s.name = "clockwork"
-  s.version = "2.0.0"
+  s.name = "tickwork"
+  s.version = "0.0.1"
 
-  s.authors = ["Adam Wiggins", "tomykaira"]
+  s.authors = ["John Hinnegan"]
   s.license = 'MIT'
-  s.description = "A scheduler process to replace cron, using a more flexible Ruby syntax running as a single long-running process.  Inspired by rufus-scheduler and resque-scheduler."
-  s.email = ["adam@heroku.com", "tomykaira@gmail.com"]
+  s.description = "A fork of clockwork. Under development."
+  s.email = ["tickwork@johnhinnegan.com"]
   s.extra_rdoc_files = [
     "README.md"
   ]
-  s.homepage = "http://github.com/tomykaira/clockwork"
-  s.summary = "A scheduler process to replace cron."
+  s.homepage = "http://github.com/softwaregravy/clockwork"
+  s.summary = "A scheduling library"
 
   s.files         = `git ls-files`.split($/)
   s.executables   = s.files.grep(%r{^bin/}) { |f| File.basename(f) }

@@ -1,4 +1,4 @@
-module Clockwork
+module Tickwork
   class Event
     class IllegalJobName < RuntimeError; end
 

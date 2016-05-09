@@ -2,7 +2,7 @@ require File.expand_path('../../lib/clockwork', __FILE__)
 require 'mocha/mini_test'
 require "minitest/autorun"
 
-describe Clockwork::Event do
+describe Tickwork::Event do
   describe '#thread?' do
     before do
       @manager = Class.new
@@ -14,12 +14,12 @@ describe Clockwork::Event do
       end
 
       it 'is true' do
-        event = Clockwork::Event.new(@manager, nil, 'unnamed', nil)
+        event = Tickwork::Event.new(@manager, nil, 'unnamed', nil)
         assert_equal true, event.thread?
       end
 
       it 'is false when event thread option set' do
-        event = Clockwork::Event.new(@manager, nil, 'unnamed', nil, :thread => false)
+        event = Tickwork::Event.new(@manager, nil, 'unnamed', nil, :thread => false)
         assert_equal false, event.thread?
       end
     end
@@ -30,7 +30,7 @@ describe Clockwork::Event do
       end
 
       it 'is true if event thread option is true' do
-        event = Clockwork::Event.new(@manager, nil, 'unnamed', nil, :thread => true)
+        event = Tickwork::Event.new(@manager, nil, 'unnamed', nil, :thread => true)
         assert_equal true, event.thread?
       end
     end
