@@ -1,6 +1,6 @@
 require File.expand_path('../../lib/clockwork', __FILE__)
 require 'minitest/autorun'
-require 'mocha/setup'
+require 'mocha/mini_test'
 
 describe Clockwork do
   before do
@@ -41,7 +41,7 @@ describe Clockwork do
   end
 
   it 'should pass event without modification to handler' do
-    event_object = Object.new
+    event_object = 'myEvent'
     run = false
     Clockwork.handler do |job|
       run = job == event_object

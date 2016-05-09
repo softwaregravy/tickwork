@@ -1,11 +1,14 @@
 module Clockwork
   class Event
+    class IllegalJobName < RuntimeError; end
+
     attr_accessor :job, :last
 
     def initialize(manager, period, job, block, options={})
       validate_if_option(options[:if])
       @manager = manager
       @period = period
+      raise IllegalJobName unless job.is_a?(String) && !job.empty?
       @job = job
       @at = At.parse(options[:at])
       @last = nil
@@ -46,7 +49,7 @@ module Clockwork
     end
 
     def to_s
-      job.to_s
+      job
     end
 
     private
