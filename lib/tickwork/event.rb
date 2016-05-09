@@ -16,6 +16,7 @@ module Tickwork
       @if = options[:if]
       @thread = options.fetch(:thread, @manager.config[:thread])
       @timezone = options.fetch(:tz, @manager.config[:tz])
+      @namespace = options[:namespace]
     end
 
     def convert_timezone(t)
@@ -32,6 +33,7 @@ module Tickwork
     end
 
     def data_store_key
+      @data_store_key ||= @namespace + 'event_' + @job
     end
 
     def run(t)

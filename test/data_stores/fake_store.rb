@@ -1,6 +1,9 @@
 module Tickwork
   class FakeStore 
-    @data_store = {}
+
+    def initialize
+      @data_store = {}
+    end
 
     def get(key)
       @data_store[:key]
