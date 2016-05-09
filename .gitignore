@@ -2,7 +2,5 @@ pkg
 tmp
 /.bundle
 Gemfile.lock
-.ruby-version
-.ruby-gemset
 *.swo
 *.swp
