@@ -2,21 +2,30 @@ module Tickwork
   class Event
     class IllegalJobName < RuntimeError; end
 
-    attr_accessor :job, :last
+    attr_accessor :job, :data_store_key
 
     def initialize(manager, period, job, block, options={})
       validate_if_option(options[:if])
       @manager = manager
       @period = period
-      raise IllegalJobName unless job.is_a?(String) && !job.empty?
+      raise IllegalJobName unless job.is_a?(String) && !job.empty? && Tickwork::Manager::MANAGER_KEY != job
       @job = job
       @at = At.parse(options[:at])
-      @last = nil
       @block = block
       @if = options[:if]
       @thread = options.fetch(:thread, @manager.config[:thread])
       @timezone = options.fetch(:tz, @manager.config[:tz])
-      @namespace = options[:namespace]
+      namespace = options[:namespace] 
+      namespace ||= '_tickwork_'
+      @data_store_key = namespace + @job
+    end
+
+    def last
+      @manager.data_store.get(data_store_key)
+    end
+
+    def last=(value)
+      @manager.data_store.set(data_store_key, value)
     end
 
     def convert_timezone(t)
@@ -28,17 +37,17 @@ module Tickwork
       elapsed_ready(t) and (@at.nil? or @at.ready?(t)) and (@if.nil? or @if.call(t))
     end
 
+    def elapsed_ready(t)
+      last.nil? || (t - last.to_i).to_i >= @period
+    end
+
     def thread?
       @thread
     end
 
-    def data_store_key
-      @data_store_key ||= @namespace + 'event_' + @job
-    end
-
     def run(t)
       @manager.log "Triggering '#{self}'"
-      @last = convert_timezone(t)
+      self.last = convert_timezone(t)
       if thread?
         if @manager.thread_available?
           t = Thread.new do
@@ -59,14 +68,10 @@ module Tickwork
 
     private
     def execute
-      @block.call(@job, @last)
+      @block.call(@job, last)
     rescue => e
       @manager.log_error e
       @manager.handle_error e
-    end
-
-    def elapsed_ready(t)
-      @last.nil? || (t - @last.to_i).to_i >= @period
     end
 
     def validate_if_option(if_option)
