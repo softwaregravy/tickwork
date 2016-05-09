@@ -47,6 +47,7 @@ module Tickwork
     end
 
     def clear!
+      Tickwork.manager.clear! unless Tickwork.manager.nil?
       Tickwork.manager = Manager.new
     end
   end

@@ -464,6 +464,12 @@ describe Tickwork::Manager do
     @manager.run
   end
 
+  it "should clear it's datastore on clear" do 
+    @manager.data_store.set(@manager.data_store_key, "10")
+    @manager.clear!
+    assert_equal nil, @manager.data_store.get(@manager.data_store_key)
+  end
+
   describe 'error_handler' do
     before do
       @errors = []
