@@ -2,7 +2,9 @@ Tickwork - a scheduler library that requires an external call to tick to run sch
 [![Build Status](https://secure.travis-ci.org/softwaregravy/tickwork.png?branch=master)](http://travis-ci.org/softwaregravy/tickwork) [![Dependency Status](https://gemnasium.com/softwaregravy/tickwork.png)](https://gemnasium.com/softwaregravy/tickwork)
 ===========================================
 
-This is a stripped down version of clockwork. Development still in progress.
+This started as a stripped down version of [clockwork[(https://github.com/tomykaira/clockwork). All credit goes to the original developers.
+
+Development still in progress.
 
 Quickstart
 ----------
