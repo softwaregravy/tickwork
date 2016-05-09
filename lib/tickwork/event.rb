@@ -31,6 +31,9 @@ module Tickwork
       @thread
     end
 
+    def data_store_key
+    end
+
     def run(t)
       @manager.log "Triggering '#{self}'"
       @last = convert_timezone(t)

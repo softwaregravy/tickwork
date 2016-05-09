@@ -1,6 +1,7 @@
 module Tickwork
   class Manager
     class NoHandlerDefined < RuntimeError; end
+    class NoDataStoreDefined < RuntimeError; end
     class DuplicateJobName < RuntimeError; end
 
     attr_reader :config
@@ -27,10 +28,20 @@ module Tickwork
       if config[:grace_period] < 60
         config[:logger].warn 'grace_period must be >= 1 second'
       end
+      if config[:data_store].nil?
+        raise NoDataStoreDefined.new
+      end
     end
 
     def default_configuration
-      { :sleep_timeout => 1, grace_period: 300, :logger => Logger.new(STDOUT), :thread => false, :max_threads => 10 }
+      { 
+        sleep_timeout: 1, 
+        grace_period: 300, 
+        logger: Logger.new(STDOUT), 
+        thread: false, 
+        max_threads: 10,
+        namespace: '_tickwork_'
+      }
     end
 
     def handler(&block)
@@ -42,6 +53,10 @@ module Tickwork
     def error_handler(&block)
       @error_handler = block if block_given?
       @error_handler
+    end
+
+    def data_store
+      config[:data_store]
     end
 
     def on(event, options={}, &block)
@@ -62,6 +77,7 @@ module Tickwork
     end
 
     def run
+      raise NoDataStoreDefined.new if data_store.nil?
       log "Starting clock for #{@events.size} events: [ #{@events.map(&:to_s).join(' ')} ]"
       loop do
         tick
