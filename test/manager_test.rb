@@ -148,6 +148,7 @@ end
       config[:max_threads] = 20
       config[:max_ticks] = 21
       config[:tick_size] = 59
+      config[:max_catchup] = 3000
       config[:thread] = true
       config[:namespace] = 'superhero'
     end
@@ -156,6 +157,7 @@ end
     assert_equal 20, @manager.config[:max_threads]
     assert_equal 21, @manager.config[:max_ticks]
     assert_equal 59, @manager.config[:tick_size]
+    assert_equal 3000, @manager.config[:max_catchup]
     assert_equal true, @manager.config[:thread]
     assert_equal 'superhero', @manager.config[:namespace]
   end
@@ -166,6 +168,7 @@ end
     assert_equal 10, @manager.config[:max_threads]
     assert_equal 10, @manager.config[:max_ticks]
     assert_equal 60, @manager.config[:tick_size]
+    assert_equal 3600, @manager.config[:max_catchup]
     assert_equal false, @manager.config[:thread]
     assert_equal '_tickwork_', @manager.config[:namespace]
   end
@@ -471,12 +474,52 @@ end
     end
     @manager.every(1.minute, 'myjob')
     assert_equal 0, @manager.config[:data_store].size
-    #@manager.expects(:tick).with(Time.now.to_i).then.returns
     @manager.run
     assert_equal 2, @manager.config[:data_store].size
     assert_equal false, @manager.config[:data_store].get('_tickwork_myjob').nil?
   end
 
+  it "should start from max catchup" do 
+    @manager.configure do |config|
+      config[:tick_size] = 1 
+      config[:max_ticks] = 1
+      config[:max_catchup] = 1800
+    end
+
+    @manager.every(1.minute, 'myjob')
+    last = Time.now.to_i - 3600
+    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.expects(:tick).with(Time.now.to_i - 1800).then.returns
+    @manager.run
+  end
+
+  it "0 should disable max catchup" do 
+    @manager.configure do |config|
+      config[:tick_size] = 1 
+      config[:max_ticks] = 1
+      config[:max_catchup] = 0
+    end
+
+    @manager.every(1.minute, 'myjob')
+    last = Time.now.to_i - 36000
+    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.expects(:tick).with(Time.now.to_i - 36000 + 1).then.returns
+    @manager.run
+  end
+
+  it "0 should disable max catchup" do 
+    @manager.configure do |config|
+      config[:tick_size] = 1 
+      config[:max_ticks] = 1
+      config[:max_catchup] = nil
+    end
+
+    @manager.every(1.minute, 'myjob')
+    last = Time.now.to_i - 36000
+    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.expects(:tick).with(Time.now.to_i - 36000 + 1).then.returns
+    @manager.run
+  end
 
   it "should clear it's datastore on #clear!" do 
     @manager.data_store.set(@manager.data_store_key, "10")

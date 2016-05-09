@@ -39,8 +39,9 @@ module Tickwork
         thread: false, 
         max_threads: 10,
         namespace: '_tickwork_',
-        tick_size: 60,
-        max_ticks: 10
+        tick_size: 60, # 1 minute
+        max_ticks: 10,
+        max_catchup: 3600 # 1 hour
       }
     end
 
@@ -89,6 +90,9 @@ module Tickwork
 
       last = last_t = data_store.get(data_store_key)
       last ||= Time.now.to_i - config[:tick_size] 
+      if !config[:max_catchup].nil? && config[:max_catchup] > 0 && last < Time.now.to_i - config[:max_catchup]
+        last = Time.now.to_i - config[:max_catchup] - config[:tick_size]
+      end
 
       ticks = 0
       tick_time = last + config[:tick_size]
