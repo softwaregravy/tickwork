@@ -55,15 +55,6 @@ module Clockwork
       @callbacks[event].nil? || @callbacks[event].all? { |h| h.call(*args) }
     end
 
-    def run
-      log "Starting clock for #{@events.size} events: [ #{@events.map(&:to_s).join(' ')} ]"
-      loop do
-        tick
-        interval = config[:sleep_timeout] - Time.now.subsec + 0.001
-        sleep(interval) if interval > 0
-      end
-    end
-
     def tick(t=Time.now)
       if (fire_callbacks(:before_tick))
         events = events_to_run(t)
