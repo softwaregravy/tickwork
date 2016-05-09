@@ -1,6 +1,7 @@
 module Clockwork
   class Manager
     class NoHandlerDefined < RuntimeError; end
+    class DuplicateJobName < RuntimeError; end
 
     attr_reader :config
 
@@ -42,11 +43,7 @@ module Clockwork
       (@callbacks[event.to_sym]||=[]) << block
     end
 
-    def every(period, job='unnamed', options={}, &block)
-      if job.is_a?(Hash) and options.empty?
-        options = job
-        job = "unnamed"
-      end
+    def every(period, job, options={}, &block)
       if options[:at].respond_to?(:each)
         every_with_multiple_times(period, job, options, &block)
       else
@@ -100,15 +97,22 @@ module Clockwork
 
     def register(period, job, block, options)
       event = Event.new(self, period, job, block || handler, options)
+      guard_duplicate_events(event)
       @events << event
       event
+    end
+
+    def guard_duplicate_events(event)
+      if @events.map{|e| e.to_s }.include? event.to_s
+        raise DuplicateJobName
+      end
     end
 
     def every_with_multiple_times(period, job, options={}, &block)
       each_options = options.clone
       options[:at].each do |at|
         each_options[:at] = at
-        register(period, job, block, each_options)
+        register(period, job + '_' + at, block, each_options)
       end
     end
   end

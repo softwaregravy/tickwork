@@ -1,6 +1,6 @@
 require File.expand_path('../../lib/clockwork', __FILE__)
 require "minitest/autorun"
-require 'mocha/setup'
+require 'mocha/mini_test'
 require 'time'
 require 'active_support/time'
 
@@ -151,16 +151,6 @@ describe Clockwork::Manager do
     assert @manager.config[:logger].is_a?(Logger)
     assert_equal 10, @manager.config[:max_threads]
     assert_equal false, @manager.config[:thread]
-  end
-
-  it "should accept unnamed job" do
-    event = @manager.every(1.minute)
-    assert_equal 'unnamed', event.job
-  end
-
-  it "should accept options without job name" do
-    event = @manager.every(1.minute, {})
-    assert_equal 'unnamed', event.job
   end
 
   describe ':at option' do
