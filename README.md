@@ -329,66 +329,12 @@ on(:after_tick) do
 end
 ```
 
-Finally, you can use tasks synchronised from a database as described in detail above:
-
-```ruby
-sync_database_events model: MyEvent, every: 1.minute do |instance_job_name|
-  # what to do with each instance
-end
-```
-
-You can use multiple `sync_database_events` if you wish, so long as you use different model classes for each (ActiveRecord Single Table Inheritance could be a good idea if you're doing this).
-
-In production
--------------
-
-Only one clock process should ever be running across your whole application
-deployment.  For example, if your app is running on three VPS machines (two app
-servers and one database), your app machines might have the following process
-topography:
-
-* App server 1: 3 web (thin start), 3 workers (rake jobs:work), 1 clock (clockwork clock.rb)
-* App server 2: 3 web (thin start), 3 workers (rake jobs:work)
-
-You should use [Monit](http://mmonit.com/monit/), [God](https://github.com/mojombo/god), [Upstart](http://upstart.ubuntu.com/), or [Inittab](http://www.tldp.org/LDP/sag/html/config-init.html) to keep your clock process
-running the same way you keep your web and workers running.
-
-Daemonization
--------------
-
-Thanks to @fddayan, `clockworkd` executes clockwork script as a daemon.
-
-You will need the [daemons gem](https://github.com/ghazel/daemons) to use `clockworkd`.  It is not automatically installed, please install by yourself.
-
-Then,
-
-```
-clockworkd -c YOUR_CLOCK.rb start
-```
-
-For more details, you can run `clockworkd -h`.
-
-Issues and Pull requests
-------------------------
-
-If you find a bug, please create an issue - [Issues · tomykaira/clockwork](https://github.com/tomykaira/clockwork/issues).
-
-For a bug fix or a feature request, please send a pull-request.
-Do not forget to add tests to show how your feature works, or what bug is fixed.
-All existing tests and new tests must pass (TravisCI is watching).
-
-We want to provide simple and customizable core, so superficial changes will not be merged (e.g. supporting new event registration style).
-In most cases, directly operating `Manager` realizes an idea, without touching the core.
-If you discover a new way to use Clockwork, please create a gist page or an article on your website, then add it to the following "Use cases" section.
-This tool is already used in various environment, so backward-incompatible requests will be mostly rejected.
-
 Use cases
 ---------
 
 Feel free to add your idea or experience and send a pull-request.
 
 - [Sending errors to Airbrake](https://github.com/tomykaira/clockwork/issues/58)
-- [Read events from a database](https://github.com/tomykaira/clockwork/issues/25)
 
 Meta
 ----
@@ -404,3 +350,4 @@ Patches contributed by Mark McGranaghan and Lukáš Konarovský
 Released under the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 http://github.com/tomykaira/clockwork
+http://github.com/softwaregravy/tickwork
