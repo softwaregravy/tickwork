@@ -1,4 +1,4 @@
-require File.expand_path('../../lib/clockwork', __FILE__)
+require File.expand_path('../../lib/tickwork', __FILE__)
 require 'mocha/mini_test'
 require "minitest/autorun"
 
