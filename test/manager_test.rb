@@ -12,6 +12,7 @@ describe Tickwork::Manager do
     @manager.configure do |config|
       config[:data_store] = Tickwork::FakeStore.new
       config[:logger] = NullLogger.new
+      #config[:logger] = Logger.new(STDOUT)
     end
     class << @manager
       def log(msg); end
@@ -124,7 +125,6 @@ describe Tickwork::Manager do
     @manager.every(1.minute, 'myjob')
 
     mocked_logger = MiniTest::Mock.new
-    mocked_logger.expect :warn, true, [String]
     mocked_logger.expect :error, true, [RuntimeError]
     @manager.configure { |c| c[:logger] = mocked_logger }
     @manager.tick(Time.now)
@@ -142,27 +142,30 @@ describe Tickwork::Manager do
   it "should be configurable" do
     logger = NullLogger.new
     @manager.configure do |config|
-      config[:sleep_timeout] = 200
       config[:grace_period] = 600
       config[:logger] = logger
-      config[:max_threads] = 10
+      config[:max_threads] = 20
+      config[:max_ticks] = 21
+      config[:tick_size] = 59
       config[:thread] = true
       config[:namespace] = 'superhero'
     end
 
     assert_equal 600, @manager.config[:grace_period]
-    assert_equal 200, @manager.config[:sleep_timeout]
     assert_equal logger, @manager.config[:logger]
-    assert_equal 10, @manager.config[:max_threads]
+    assert_equal 20, @manager.config[:max_threads]
+    assert_equal 21, @manager.config[:max_ticks]
+    assert_equal 59, @manager.config[:tick_size]
     assert_equal true, @manager.config[:thread]
     assert_equal 'superhero', @manager.config[:namespace]
   end
 
   it "configuration should have reasonable defaults" do
     @manager = Tickwork::Manager.new
-    assert_equal 1, @manager.config[:sleep_timeout]
     assert @manager.config[:logger].is_a?(Logger)
     assert_equal 10, @manager.config[:max_threads]
+    assert_equal 10, @manager.config[:max_ticks]
+    assert_equal 60, @manager.config[:tick_size]
     assert_equal false, @manager.config[:thread]
     assert_equal '_tickwork_', @manager.config[:namespace]
   end
@@ -385,6 +388,80 @@ describe Tickwork::Manager do
       @manager.tick
       assert_equal 1, counter
     end
+  end
+
+  it "should start from last tick" do 
+    @manager.configure do |config|
+      config[:tick_size] = 1
+      config[:max_ticks] = 1
+    end
+    last = Time.now.to_i - 1000
+    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.expects(:tick).with(last + 1).then.returns
+    @manager.run
+  end
+
+  it "should tick to max_ticks" do 
+    @manager.configure do |config|
+      config[:tick_size] = 1
+      config[:max_ticks] = 3
+    end
+    last = Time.now.to_i - 1000
+    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.expects(:tick).with(last + 1).then.returns
+    @manager.expects(:tick).with(last + 2).then.returns
+    @manager.expects(:tick).with(last + 3).then.returns
+    @manager.run
+  end
+
+  it "should tick by tick size" do 
+    @manager.configure do |config|
+      config[:tick_size] = 2
+      config[:max_ticks] = 3
+    end
+    last = Time.now.to_i - 1000
+    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.expects(:tick).with(last + 2).then.returns
+    @manager.expects(:tick).with(last + 4).then.returns
+    @manager.expects(:tick).with(last + 6).then.returns
+    @manager.run
+  end
+
+  it "should not tick into the future" do 
+    @manager.configure do |config|
+      config[:tick_size] = 10
+      config[:max_ticks] = 3
+    end
+    last = Time.now.to_i - 1
+    @manager.data_store.set(@manager.data_store_key, last)
+    module Failure
+      def tick 
+        raise "don't call me"
+      end 
+    end 
+    @manager.extend Failure
+    @manager.run
+  end
+
+  it "should save the last tick time" do 
+    @manager.configure do |config|
+      config[:tick_size] = 10
+      config[:max_ticks] = 1
+    end
+    last = Time.now.to_i - 1000
+    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.expects(:tick).with(last + 10).then.returns
+    @manager.run
+    assert_equal (last + 10), @manager.data_store.get(@manager.data_store)
+  end
+
+  it "should tick from now if no last time" do 
+    @manager.configure do |config|
+      config[:tick_size] = 10
+      config[:max_ticks] = 1
+    end
+    @manager.expects(:tick).with(Time.now.to_i).then.returns
+    @manager.run
   end
 
   describe 'error_handler' do

@@ -4,11 +4,14 @@ require 'minitest/autorun'
 require 'mocha/mini_test'
 
 describe Tickwork do
+def self.test_order
+   :alpha
+end
   before do
     @log_output = StringIO.new
     Tickwork.configure do |config|
-      config[:sleep_timeout] = 0
       config[:logger] = Logger.new(@log_output)
+      #config[:logger] = Logger.new(STDOUT)
       config[:data_store] = Tickwork::FakeStore.new
     end
   end
@@ -23,7 +26,8 @@ describe Tickwork do
       run = job == 'myjob'
     end
     Tickwork.every(1.minute, 'myjob')
-    Tickwork.manager.expects(:loop).yields.then.returns
+    # don't know why this doesn't work with while but did with loop
+    #Tickwork.manager.expects(:while).yields.then.returns
     Tickwork.run
 
     assert run
@@ -36,7 +40,7 @@ describe Tickwork do
       run = job == 'an event'
     end
     Tickwork.every(1.minute, 'an event')
-    Tickwork.manager.expects(:loop).yields.then.returns
+    # Tickwork.manager.expects(:while).yields.then.returns
     Tickwork.run
     assert run
     assert @log_output.string.include?("Triggering 'an event'")
@@ -49,7 +53,7 @@ describe Tickwork do
       run = job == event_object
     end
     Tickwork.every(1.minute, event_object)
-    Tickwork.manager.expects(:loop).yields.then.returns
+    # Tickwork.manager.expects(:while).yields.then.returns
     Tickwork.run
     assert run
   end
@@ -62,14 +66,14 @@ describe Tickwork do
       config[:logger] = Logger.new(@log_output)
       config[:data_store] = Tickwork::FakeStore.new
     end
-    Tickwork.manager.expects(:loop).yields.then.returns
+    # Tickwork.manager.expects(:while).yields.then.returns
     Tickwork.run
     assert @log_output.string.include?('0 events')
   end
 
   it 'should pass all arguments to every' do
     Tickwork.every(1.second, 'myjob', if: lambda { |_| false }) {  }
-    Tickwork.manager.expects(:loop).yields.then.returns
+    # Tickwork.manager.expects(:while).yields.then.returns
     Tickwork.run
     assert @log_output.string.include?('1 events')
     assert !@log_output.string.include?('Triggering')
@@ -80,7 +84,7 @@ describe Tickwork do
     module ::Tickwork
       every(1.second, 'myjob') { $called = true }
     end
-    Tickwork.manager.expects(:loop).yields.then.returns
+    # Tickwork.manager.expects(:while).yields.then.returns
     Tickwork.run
     assert $called
   end

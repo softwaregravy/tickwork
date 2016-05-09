@@ -11,6 +11,7 @@ module Tickwork
       @callbacks = {}
       @config = default_configuration
       @handler = nil
+      @error_handler = nil
     end
 
     def thread_available?
@@ -21,9 +22,9 @@ module Tickwork
       yield(config)
       if config[:sleep_timeout]
         config[:logger].warn 'INCORRECT USAGE: sleep_timeout is not used'
-      end
-      if config[:sleep_timeout] < 1
-        config[:logger].warn 'sleep_timeout must be >= 1 second'
+        if config[:sleep_timeout] < 1
+          config[:logger].warn 'sleep_timeout must be >= 1 second'
+        end
       end
       if config[:grace_period] < 60
         config[:logger].warn 'grace_period must be >= 1 second'
@@ -35,12 +36,13 @@ module Tickwork
 
     def default_configuration
       { 
-        sleep_timeout: 1, 
         grace_period: 300, 
         logger: Logger.new(STDOUT), 
         thread: false, 
         max_threads: 10,
-        namespace: '_tickwork_'
+        namespace: '_tickwork_',
+        tick_size: 60,
+        max_ticks: 10
       }
     end
 
@@ -76,17 +78,34 @@ module Tickwork
       @callbacks[event].nil? || @callbacks[event].all? { |h| h.call(*args) }
     end
 
+    def data_store_key
+      @data_store_key ||= config[:namespace] + 'manager'
+    end
+
+      # pretty straight forward if you think about it
+      # run the ticks from the last time we ran to our max
+      # but don't run ticks in the future
     def run
       raise NoDataStoreDefined.new if data_store.nil?
       log "Starting clock for #{@events.size} events: [ #{@events.map(&:to_s).join(' ')} ]"
-      loop do
-        tick
-        interval = config[:sleep_timeout] - Time.now.subsec + 0.001
-        sleep(interval) if interval > 0
+
+      last = last_t = data_store.get(data_store_key)
+      last ||= Time.now.to_i - config[:tick_size] 
+
+      ticks = 0
+      tick_time = last + config[:tick_size]
+
+      while ticks < config[:max_ticks] && tick_time <= Time.now.to_i do
+        tick(tick_time) 
+        last = tick_time
+        tick_time += config[:tick_size]
+        ticks += 1
       end
+      data_store.set(data_store_key, last)
     end
 
-    def tick(t=Time.now)
+    def tick(t=Time.now.to_i)
+      t = Time.at(t) # TODO refactor below
       if (fire_callbacks(:before_tick))
         events = events_to_run(t)
         events.each do |event|
@@ -118,6 +137,7 @@ module Tickwork
     end
 
     def register(period, job, block, options)
+      options.merge({:namespace => config[:namespace]})
       event = Event.new(self, period, job, block || handler, options)
       guard_duplicate_events(event)
       @events << event
