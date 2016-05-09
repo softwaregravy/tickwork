@@ -119,6 +119,10 @@ module Tickwork
       events
     end
 
+    def clear!
+      data_store.set(data_store_key, nil)
+    end
+
     def log_error(e)
       config[:logger].error(e)
     end
