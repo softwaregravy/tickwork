@@ -13,8 +13,8 @@ Quickstart
 Create clock.rb:
 
 ```ruby
-require 'clockwork'
-module Clockwork
+require 'tickwork'
+module Tickwork
   handler do |job|
     puts "Running #{job}"
   end
@@ -32,14 +32,6 @@ module Clockwork
 end
 ```
 
-Run it with the clockwork executable:
-
-```
-$ clockwork clock.rb
-Starting clock for 4 events: [ frequent.job less.frequent.job hourly.job midnight.job ]
-Triggering frequent.job
-```
-
 If you need to load your entire environment for your jobs, simply add:
 
 ```ruby
@@ -48,14 +40,6 @@ require './config/environment'
 ```
 
 under the `require 'clockwork'` declaration.
-
-Quickstart for Heroku
----------------------
-
-Clockwork fits well with heroku's cedar stack.
-
-Consider to use [clockwork-init.sh](https://gist.github.com/1312172) to create
-a new project for heroku.
 
 Use with queueing
 -----------------
@@ -77,7 +61,7 @@ For example, if you're using Beanstalk/Stalker:
 ```ruby
 require 'stalker'
 
-module Clockwork
+module Tickwork
   handler { |job| Stalker.enqueue(job) }
 
   every(1.hour, 'feeds.refresh')
@@ -171,7 +155,7 @@ return value is true.
 Run on every first day of month.
 
 ```ruby
-Clockwork.every(1.day, 'myjob', :if => lambda { |t| t.day == 1 })
+Tickwork.every(1.day, 'myjob', :if => lambda { |t| t.day == 1 })
 ```
 
 The argument is an instance of `ActiveSupport::TimeWithZone` if the `:tz` option is set. Otherwise, it's an instance of `Time`.
@@ -179,19 +163,19 @@ The argument is an instance of `ActiveSupport::TimeWithZone` if the `:tz` option
 This argument cannot be omitted.  Please use _ as placeholder if not needed.
 
 ```ruby
-Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
+Tickwork.every(1.second, 'myjob', :if => lambda { |_| true })
 ```
 
 ### :thread
 
 By default, clockwork runs in a single-process and single-thread.
 If an event handler takes a long time, the main routine of clockwork is blocked until it ends.
-Clockwork does not misbehave, but the next event is blocked, and runs when the process is returned to the clockwork routine.
+Tickwork does not misbehave, but the next event is blocked, and runs when the process is returned to the clockwork routine.
 
 The `:thread` option is to avoid blocking. An event with `thread: true` runs in a different thread.
 
 ```ruby
-Clockwork.every(1.day, 'run.me.in.new.thread', :thread => true)
+Tickwork.every(1.day, 'run.me.in.new.thread', :thread => true)
 ```
 
 If a job is long-running or IO-intensive, this option helps keep the clock precise.
@@ -199,19 +183,19 @@ If a job is long-running or IO-intensive, this option helps keep the clock preci
 Configuration
 -----------------------
 
-Clockwork exposes a couple of configuration options:
+Tickwork exposes a couple of configuration options:
 
 ### :logger
 
-By default Clockwork logs to `STDOUT`. In case you prefer your
+By default Tickwork logs to `STDOUT`. In case you prefer your
 own logger implementation you have to specify the `logger` configuration option. See example below.
 
 ### :sleep_timeout
 
-Clockwork wakes up once a second and performs its duties. To change the number of seconds Clockwork
+Tickwork wakes up once a second and performs its duties. To change the number of seconds Tickwork
 sleeps, set the `sleep_timeout` configuration option as shown below in the example.
 
-From 1.1.0, Clockwork does not accept `sleep_timeout` less than 1 seconds.
+From 1.1.0, Tickwork does not accept `sleep_timeout` less than 1 seconds.
 This restriction is introduced to solve more severe bug [#135](https://github.com/tomykaira/clockwork/pull/135).
 
 ### :tz
@@ -221,7 +205,7 @@ timezone.  Specifying :tz in the parameters for an event overrides anything set 
 
 ### :max_threads
 
-Clockwork runs handlers in threads. If it exceeds `max_threads`, it will warn you (log an error) about missing
+Tickwork runs handlers in threads. If it exceeds `max_threads`, it will warn you (log an error) about missing
 jobs.
 
 
@@ -232,7 +216,7 @@ Boolean true or false. Default is false. If set to true, every event will be run
 ### Configuration example
 
 ```ruby
-module Clockwork
+module Tickwork
   configure do |config|
     config[:sleep_timeout] = 5
     config[:logger] = Logger.new(log_file_path)
@@ -248,7 +232,7 @@ end
 You can add error_handler to define your own logging or error rescue.
 
 ```ruby
-module Clockwork
+module Tickwork
   error_handler do |error|
     Airbrake.notify_or_ignore(error)
   end
@@ -265,7 +249,7 @@ Any suggestion about these specifications is welcome.
 Old style
 ---------
 
-`include Clockwork` is old style.
+`include Tickwork` is old style.
 The old style is still supported, though not recommended, because it pollutes the global namespace.
 
 
@@ -273,7 +257,7 @@ The old style is still supported, though not recommended, because it pollutes th
 Anatomy of a clock file
 -----------------------
 
-clock.rb is standard Ruby.  Since we include the Clockwork module (the
+clock.rb is standard Ruby.  Since we include the Tickwork module (the
 clockwork executable does this automatically, or you can do it explicitly), this
 exposes a small DSL to define the handler for events, and then the events themselves.
 
@@ -318,7 +302,7 @@ every(1.day, 'check.leap.year') do
 end
 ```
 
-In addition, Clockwork also supports `:before_tick` and `after_tick` callbacks.
+In addition, Tickwork also supports `:before_tick` and `after_tick` callbacks.
 They are optional, and run every tick (a tick being whatever your `:sleep_timeout`
 is set to, default is 1 second):
 
