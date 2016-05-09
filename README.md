@@ -3,14 +3,18 @@ Tickwork - a scheduler library that requires an external call to tick to run sch
 
 [![Build Status](https://secure.travis-ci.org/softwaregravy/tickwork.png?branch=master)](http://travis-ci.org/softwaregravy/tickwork) [![Dependency Status](https://gemnasium.com/softwaregravy/tickwork.png)](https://gemnasium.com/softwaregravy/tickwork)
 
-This started as a stripped down version of [clockwork[(https://github.com/tomykaira/clockwork). All credit goes to the original developers.
+This started as a stripped down version of [clockwork](https://github.com/tomykaira/clockwork). 
 
-Development still in progress.
+Tickwork provides a familiar and compatible config file for scheduled jobs, but instead of it being driven by a background process, it relies on regular calls to `Tickwork.run`. `Tickwork.run` efectively ticks the clock forward from the last time it was called scheduling jobs as it goes. By tuning the paramters below, you can call `Tickwork.run` as little or as often as you like. 
+
+Tickwork keeps track of time using a datastore. Right now, nothing is supported. 
+
+Note that clockwork allowed schedules to be dynamically set via the database. This functionality does not exist in Tickwork.
 
 Quickstart
 ----------
 
-Create clock.rb:
+Create tick.rb:
 
 ```ruby
 require 'tickwork'
@@ -39,7 +43,9 @@ require './config/boot'
 require './config/environment'
 ```
 
-under the `require 'clockwork'` declaration.
+under the `require 'tickwork'` declaration.
+
+Then, somewhere else in your app, you need to regularly call `Tickwork.run`. 
 
 Use with queueing
 -----------------
@@ -190,14 +196,6 @@ Tickwork exposes a couple of configuration options:
 By default Tickwork logs to `STDOUT`. In case you prefer your
 own logger implementation you have to specify the `logger` configuration option. See example below.
 
-### :sleep_timeout
-
-Tickwork wakes up once a second and performs its duties. To change the number of seconds Tickwork
-sleeps, set the `sleep_timeout` configuration option as shown below in the example.
-
-From 1.1.0, Tickwork does not accept `sleep_timeout` less than 1 seconds.
-This restriction is introduced to solve more severe bug [#135](https://github.com/tomykaira/clockwork/pull/135).
-
 ### :tz
 
 This is the default timezone to use for all events.  When not specified this defaults to the local
@@ -213,19 +211,62 @@ jobs.
 
 Boolean true or false. Default is false. If set to true, every event will be run in its own thread. Can be overridden on a per event basis (see the ```:thread``` option in the Event Parameters section above)
 
+### :namespace
+
+This prefixes keys with a namespace which is useful to prevent colisions if you are using redis or memcache as the datastore. Defautls to `_tickwork_`.
+
+### Stepping forward in time from the past
+
+Think about Tickwork as having a concept of now built into it, but rather than now moving with the clock, it only moves forward (ticks forward) when you tell it to. You tell it to tick forward through time by calling `Tickwork.run`. How much it ticks forward is controlled by the following variables. 
+
+If you think of a clock, each tick is 1 second, and you take 1 tick each second. With tickwork, you control the size of the ticks, how many you take, and how often you take them.
+
+Tickwork will never tick into the future.
+
+### :tick_size
+
+This is the interval in seconds that each tick will step forward. The original clockwork implementation would (by default) wake up every second to check for work. Tickwork defaults to 60 seconds. This effectively puts a floor on your frequency of events you can schedule. So if you scheduled something to run every 30 seconds, it would only be run every other time -- so don't do that. 
+
+In general, set this to at least as small as your most frequently run job. If you set this to a value larger than 60, then events schedule to run at a particular time may be missed. 
+
+### :max_ticks
+
+This is the most number of ticks executed per run. If you have `tick_size` set to 60, then each tick will be 1 minute. If `max_ticks` is set to 10, then a call to `Tickwork.run` could result in as many as 10 minutes worth of jobs being scheduled. If you had 1 job that ran every minute, up to 10 jobs would be run. Tickwork will not tick into the future, so you may run fewer than this number of jobs. 
+
+In any given call to `Tickwork.run`, you can move foward through time at most tick_size * max_ticks
+
+### :max_catchup
+
+When running tickwork, the last time you run it is important since that is what now. But what if your system goes down? `max_catchup` sets a floor on how far back Tickwork look back for jobs. This defaults to 3600 which is 1 hour. This means that if you run Tickwork for a day, then turn your system off for a day, then start running Tickwork again, it will start scheduling jobs from 1 hour ago.
+
+Setting to 0 or nil disables the feature, and Tickwork will start from where it left off.
+
+If there is no last timestamp, Tickwork starts from now. 
+
+This must be larger than your `tick_size`, and probably significantly larger to avoid missing any jobs.
+
 ### Configuration example
 
 ```ruby
 module Tickwork
   configure do |config|
-    config[:sleep_timeout] = 5
     config[:logger] = Logger.new(log_file_path)
     config[:tz] = 'EST'
     config[:max_threads] = 15
     config[:thread] = true
+    config[:tick_size] = 60
+    config[:max_ticks] = 10
+    config[:max_catchup] = 3600
   end
 end
 ```
+
+### External call frequency & configs
+
+Since tickwork requires on some external system to make calls into `Tickwork.run`, you must balance whatever that system is against the config settings.
+
+Lets say you call `Tickwork.run` every 5 minutes and you have no jobs trying to run faster than 1x/min. The default values will work well (`tick_size: 60, max_ticks: 10`). Every 5 minutes, you would expect to run 5 minutes worth of jobs. If you miss 1 period, you will catch up and run 10 minutes worth of jobs. However, if you miss 2 periods, then call back (after 15 min), it will take 2 calls to catch up since there are 15 minutes waiting to run, but `max_ticks` limits this to just 10 per call.
+
 
 ### error_handler
 
@@ -246,19 +287,11 @@ Current specifications are as follows.
 
 Any suggestion about these specifications is welcome.
 
-Old style
----------
 
-`include Tickwork` is old style.
-The old style is still supported, though not recommended, because it pollutes the global namespace.
-
-
-
-Anatomy of a clock file
+Anatomy of a tick file
 -----------------------
 
-clock.rb is standard Ruby.  Since we include the Tickwork module (the
-clockwork executable does this automatically, or you can do it explicitly), this
+tick.rb is standard Ruby.  Since we include the Tickwork module, this
 exposes a small DSL to define the handler for events, and then the events themselves.
 
 The handler typically looks like this:
