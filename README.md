@@ -19,6 +19,10 @@ Create tick.rb:
 ```ruby
 require 'tickwork'
 module Tickwork
+  configure do |config|
+    # See DataStore below
+    config[:data_store] = MyDataStore
+  end
   handler do |job|
     puts "Running #{job}"
   end
