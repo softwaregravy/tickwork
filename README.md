@@ -7,9 +7,15 @@ This started as a stripped down version of [clockwork](https://github.com/tomyka
 
 Tickwork provides a familiar and compatible config file for scheduled jobs, but instead of it being driven by a background process, it relies on regular calls to `Tickwork.run`. `Tickwork.run` efectively ticks the clock forward from the last time it was called scheduling jobs as it goes. By tuning the paramters below, you can call `Tickwork.run` as little or as often as you like. 
 
-Tickwork keeps track of time using a datastore. Right now, nothing is supported. 
+Tickwork keeps track of time using a datastore. This is compatible with `ActiveSupport::Cache::Store` so should be compatible with most cache stores out there. It is important the cache be distributed (so not `ActiveSupport::Cache::Store`). [AWS_Tickwork](https://github.com/softwaregravy/aws_tickwork) contains an example of an `ActiveRecord` implementation.
 
 Note that clockwork allowed schedules to be dynamically set via the database. This functionality does not exist in Tickwork.
+
+Possible Combinations
+-----------------------
+
+This was originally built with the idea of using [Cloudwatch Events](https://aws.amazon.com/blogs/aws/new-cloudwatch-events-track-and-respond-to-changes-to-your-aws-resources/) to power time. An implementation doing that is here: [AWS_Tickwork](https://github.com/softwaregravy/aws_tickwork). Another option would be [Heroku Scheduler](https://devcenter.heroku.com/articles/scheduler). I'm sure there are many more options out there.
+
 
 Quickstart
 ----------
