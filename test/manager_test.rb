@@ -399,7 +399,7 @@ end
       config[:max_ticks] = 1
     end
     last = Time.now.to_i - 1000
-    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.data_store.write(@manager.data_store_key, last)
     @manager.expects(:tick).with(last + 1).then.returns
     @manager.run
   end
@@ -410,7 +410,7 @@ end
       config[:max_ticks] = 3
     end
     last = Time.now.to_i - 1000
-    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.data_store.write(@manager.data_store_key, last)
     @manager.expects(:tick).with(last + 1).then.returns
     @manager.expects(:tick).with(last + 2).then.returns
     @manager.expects(:tick).with(last + 3).then.returns
@@ -423,7 +423,7 @@ end
       config[:max_ticks] = 3
     end
     last = Time.now.to_i - 1000
-    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.data_store.write(@manager.data_store_key, last)
     @manager.expects(:tick).with(last + 2).then.returns
     @manager.expects(:tick).with(last + 4).then.returns
     @manager.expects(:tick).with(last + 6).then.returns
@@ -436,7 +436,7 @@ end
       config[:max_ticks] = 3
     end
     last = Time.now.to_i - 1
-    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.data_store.write(@manager.data_store_key, last)
     module Failure
       def tick 
         raise "don't call me"
@@ -452,10 +452,10 @@ end
       config[:max_ticks] = 1
     end
     last = Time.now.to_i - 1000
-    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.data_store.write(@manager.data_store_key, last)
     @manager.expects(:tick).with(last + 10).then.returns
     @manager.run
-    assert_equal (last + 10), @manager.data_store.get(@manager.data_store_key)
+    assert_equal (last + 10), @manager.data_store.read(@manager.data_store_key)
   end
 
   it "should tick from now if no last time" do 
@@ -476,7 +476,7 @@ end
     assert_equal 0, @manager.config[:data_store].size
     @manager.run
     assert_equal 2, @manager.config[:data_store].size
-    assert_equal false, @manager.config[:data_store].get('_tickwork_myjob').nil?
+    assert_equal false, @manager.config[:data_store].read('_tickwork_myjob').nil?
   end
 
   it "should start from max catchup when last is further in the past" do 
@@ -488,7 +488,7 @@ end
 
     @manager.every(1.minute, 'myjob')
     last = Time.now.to_i - 3600
-    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.data_store.write(@manager.data_store_key, last)
     @manager.expects(:tick).with(Time.now.to_i - 1800).then.returns
     @manager.run
   end
@@ -502,7 +502,7 @@ end
 
     @manager.every(1.minute, 'myjob')
     last = Time.now.to_i - 36000
-    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.data_store.write(@manager.data_store_key, last)
     @manager.expects(:tick).with(Time.now.to_i - 36000 + 1).then.returns
     @manager.run
   end
@@ -516,7 +516,7 @@ end
 
     @manager.every(1.minute, 'myjob')
     last = Time.now.to_i - 36000
-    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.data_store.write(@manager.data_store_key, last)
     @manager.expects(:tick).with(Time.now.to_i - 36000 + 1).then.returns
     @manager.run
   end
@@ -527,16 +527,16 @@ end
       config[:max_ticks] = 2
     end
     last = Time.now.to_i - 1000
-    @manager.data_store.set(@manager.data_store_key, last)
+    @manager.data_store.write(@manager.data_store_key, last)
     @manager.expects(:tick).with(last + 10).then.returns
     @manager.expects(:tick).with(last + 20).then.returns
     assert_equal last + 20, @manager.run
   end
 
   it "should clear it's datastore on #clear!" do 
-    @manager.data_store.set(@manager.data_store_key, "10")
+    @manager.data_store.write(@manager.data_store_key, "10")
     @manager.clear!
-    assert_equal nil, @manager.data_store.get(@manager.data_store_key)
+    assert_equal nil, @manager.data_store.read(@manager.data_store_key)
   end
 
   describe 'error_handler' do

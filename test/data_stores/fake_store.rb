@@ -5,11 +5,11 @@ module Tickwork
       @data_store = {}
     end
 
-    def get(key)
+    def read(key)
       @data_store[key]
     end
 
-    def set(key, value)
+    def write(key, value)
       @data_store[key] = value
     end
 

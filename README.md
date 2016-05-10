@@ -249,6 +249,21 @@ If there is no last timestamp, Tickwork starts from now.
 
 This must be larger than your `tick_size`, and probably significantly larger to avoid missing any jobs.
 
+### :data_store
+
+A datastore is required to save the times that jobs last run. This is how Tickwork keeps track of time. This can be anything that implements the following methods:
+
+```ruby
+def read(key)
+end
+def write(key, value)
+end
+```
+
+ActiveSupport::Cache::Store satisfies this, so Rails users can use that. This must be a shared cache to work properly in an environment with multiple servers.
+
+
+
 ### Configuration example
 
 ```ruby

@@ -13,16 +13,20 @@ module Tickwork
 
     # Providers should implement
     #
-    # def get(key)
+    # def read(key)
     #
     # end
     # 
-    # def set(key, value)
+    # def write(key, value)
     #
     # end
     #
     # note: keys will be prefixed with '_tickwork_' both for easy identification and also to 
     # help avoid conflicts with the rest of the app
+    #
+    # Keen observers will note that this interface is compatible with ActiveSupport::Cache::Store. So you should
+    # be able to just drop an instance of Store in and be ready to go. Preferably with a cache expiration time
+    # longer than your max_catchup value
 
   end
 end

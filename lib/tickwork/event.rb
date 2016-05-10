@@ -21,11 +21,11 @@ module Tickwork
     end
 
     def last
-      @manager.data_store.get(data_store_key)
+      @manager.data_store.read(data_store_key)
     end
 
     def last=(value)
-      @manager.data_store.set(data_store_key, value)
+      @manager.data_store.write(data_store_key, value)
     end
 
     def convert_timezone(t)

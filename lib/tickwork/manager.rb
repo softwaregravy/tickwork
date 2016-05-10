@@ -94,7 +94,7 @@ module Tickwork
       raise NoDataStoreDefined.new if data_store.nil?
       log "Starting clock for #{@events.size} events: [ #{@events.map(&:to_s).join(' ')} ]"
 
-      last = last_t = data_store.get(data_store_key)
+      last = last_t = data_store.read(data_store_key)
       last ||= Time.now.to_i - config[:tick_size] 
       if !config[:max_catchup].nil? && config[:max_catchup] > 0 && last < Time.now.to_i - config[:max_catchup]
         last = Time.now.to_i - config[:max_catchup] - config[:tick_size]
@@ -109,7 +109,7 @@ module Tickwork
         tick_time += config[:tick_size]
         ticks += 1
       end
-      data_store.set(data_store_key, last)
+      data_store.write(data_store_key, last)
       last
     end
 
@@ -129,7 +129,7 @@ module Tickwork
     end
 
     def clear!
-      data_store.set(data_store_key, nil)
+      data_store.write(data_store_key, nil)
     end
 
     def log_error(e)
