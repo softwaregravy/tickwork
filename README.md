@@ -40,6 +40,8 @@ module Tickwork
 end
 ```
 
+Note, this needs to be global to access the config whenever you run Tickwork. If you're on rails, this should be an initializer. 
+
 If you need to load your entire environment for your jobs, simply add:
 
 ```ruby
