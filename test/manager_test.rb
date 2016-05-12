@@ -162,6 +162,21 @@ end
     assert_equal 'superhero', @manager.config[:namespace]
   end
 
+  it "should be configurable and guard for string numbers" do
+    logger = NullLogger.new
+    @manager.configure do |config|
+      config[:max_threads] = "20"
+      config[:max_ticks] = "21"
+      config[:tick_size] = "59"
+      config[:max_catchup] = "3000"
+    end
+
+    assert_equal 20, @manager.config[:max_threads]
+    assert_equal 21, @manager.config[:max_ticks]
+    assert_equal 59, @manager.config[:tick_size]
+    assert_equal 3000, @manager.config[:max_catchup]
+  end
+
   it "configuration should have reasonable defaults" do
     @manager = Tickwork::Manager.new
     assert @manager.config[:logger].is_a?(Logger)
