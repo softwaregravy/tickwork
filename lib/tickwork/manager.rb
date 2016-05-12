@@ -22,6 +22,9 @@ module Tickwork
 
     def configure
       yield(config)
+      [:max_threads, :tick_size, :max_ticks, :max_catchup].each do |int_config_key|
+        config[int_config_key] = config[int_config_key].to_i
+      end
       if config[:sleep_timeout]
         config[:logger].warn 'INCORRECT USAGE: sleep_timeout is not used'
         if config[:sleep_timeout] < 1
