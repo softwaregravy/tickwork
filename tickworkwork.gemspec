@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "tickwork"
-  s.version = "0.1.0"
+  s.version = "0.9.0"
 
   s.authors = ["John Hinnegan"]
   s.license = 'MIT'
