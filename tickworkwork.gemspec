@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "tickwork"
-  s.version = "0.9.0"
+  s.version = "0.9.1"
 
   s.authors = ["John Hinnegan"]
   s.license = 'MIT'
@@ -17,12 +17,12 @@ Gem::Specification.new do |s|
   s.test_files    = s.files.grep(%r{^(test|spec|features)/})
   s.require_paths = ["lib"]
 
-  s.add_dependency(%q<tzinfo>)
-  s.add_dependency(%q<activesupport>)
+  s.add_dependency "tzinfo"
+  s.add_dependency "activesupport", "~> 5.2"
 
-  s.add_development_dependency "bundler", "~> 1.3"
+  s.add_development_dependency "bundler"
   s.add_development_dependency "rake"
   s.add_development_dependency "daemons"
-  s.add_development_dependency "minitest", "~> 5.8"
+  s.add_development_dependency "minitest", "~> 5.11"
   s.add_development_dependency "mocha"
 end
