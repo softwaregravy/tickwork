@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "tickwork"
-  s.version = "0.9.1"
+  s.version = "0.9.2"
 
   s.authors = ["John Hinnegan"]
   s.license = 'MIT'
@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_dependency "tzinfo"
-  s.add_dependency "activesupport", "~> 5.2"
+  s.add_dependency "activesupport"
 
   s.add_development_dependency "bundler"
   s.add_development_dependency "rake"
